@@ -1,0 +1,285 @@
+# Development Environment Automation Specification
+
+## Document Purpose
+
+The intent is to create a unified system to setup and manage a home lab development environment containing a plethora of machines, both real and virtual, across a collection of operating systems. This specification serves as the comprehensive guide and requirements document for developing an adaptive, flexible automation solution for provisioning and managing a diverse development infrastructure.
+
+The implementation will be realized through a series of Ansible scripts, meticulously defined by the contents of this document. The ultimate deliverables will include:
+
+1. Ansible playbooks
+2. All required configuration files
+3. A comprehensive handbook describing system setup, usage, and maintenance
+
+## Machine Inventory and Types
+
+* Multiple machines across different platforms
+* Platforms:
+
+  * Windows 11
+  * Windows 10
+  * Ubuntu
+  * Raspbian
+* Machine Roles:
+
+  * Dev Machines (Full development environment)
+  * Dev Targets (Minimal setup for remote development)
+  * All machines on same LAN
+
+## User Configuration
+
+* Username: jerry
+* Authentication Method:
+
+  * Preferred: SSH key-based, passwordless
+  * Initial password: "jerry"
+
+## Development Tools and Environments
+
+### Programming Language Management
+
+* Python Version Management
+
+  * Mandatory Versions:
+
+    * 3.12.1 (for pipx compatibility)
+    * 3.13.1 (latest version)
+  * Tools:
+
+    * pyenv
+    * pipx
+    * poetry
+
+### Version Control and Repository Management
+
+* Local git repositories
+* Backup on:
+
+  * GitHub
+  * GitLab
+* Git Tools:
+
+  * Git for Windows
+  * GitKraken
+
+### Development Environments
+
+* Editors/IDEs:
+
+  * Emacs
+  * VSCode
+  * PyCharm
+  * Other JetBrains IDEs
+  * Android Studio
+
+## Target Development Support
+
+* SSH access configuration
+* Open necessary ports for:
+
+  * VSCode remote development
+  * PyCharm remote development
+
+## Configuration Management
+
+* Approach: Single adaptive Ansible playbook
+* Dynamically detect and configure:
+
+  * Machine type
+  * Operating system
+  * Architecture
+* Configuration tracking via:
+
+  * Chezmoi for dotfile management
+  * Git bare repositories
+
+## Security Considerations
+
+### Network Security
+
+* Minimal port exposure
+* Preference for turning off unnecessary services
+
+### Authentication
+
+* SSH key-based authentication
+* Passwordless access
+* Key Rotation Strategy:
+
+  * Flexible approach
+  * Ansible-managed rotation
+  * Potential for annual or on-demand rotation
+
+## Logging Strategy
+
+* Log Location: `/var/log/devops/`
+* Log Filename Format: `YYYY-MM-DD-<MachineName>.log`
+* Logging Scope:
+
+  * Ansible playbook executions
+  * Significant operational changes
+* Log Entry Details:
+
+  * Timestamp
+  * Operation name
+  * Command line
+  * Purpose/Context
+
+## Update and Maintenance Policy
+
+### Dev Machines
+
+* Automated updates for:
+
+  * Operating System
+  * VSCode
+  * PyCharm
+  * GitKraken
+* Manual control for toolchain updates
+
+### Dev Targets
+
+* Minimal, controlled updates
+* Security patches only
+* Manual intervention preferred
+
+## Excluded Considerations (Deferred)
+
+* Specific database systems
+* Web frameworks
+* Cloud tooling
+* Comprehensive monitoring solutions
+
+## Future Considerations
+
+* Potential Tailscale integration for cloud development services
+* More comprehensive monitoring
+* Centralized log aggregation
+
+## Secrets Management
+
+* Primary Method: Bitwarden
+
+## Firewall
+
+* Recommended: UFW (Uncomplicated Firewall)
+* Minimal open ports
+
+## Project Structure (Proposed)
+
+```
+dev-environment-automation/
+│
+├── ansible/
+│   ├── playbooks/
+│   │   ├── main.yml
+│   │   ├── windows-dev-setup.yml
+│   │   ├── linux-dev-setup.yml
+│   │   └── raspbian-dev-setup.yml
+│   │
+│   ├── inventory/
+│   │   ├── hosts
+│   │   └── group_vars/
+│   │
+│   ├── roles/
+│   │   ├── common/
+│   │   ├── python-setup/
+│   │   ├── dev-tools/
+│   │   └── ssh-config/
+│   │
+│   └── files/
+│
+├── handbook/
+│   ├── 01-introduction.md
+│   ├── 02-prerequisites.md
+│   ├── 03-installation.md
+│   ├── 04-usage.md
+│   └── 05-troubleshooting.md
+│
+├── scripts/
+├── README.md
+└── ansible.cfg
+```
+
+## Bootstrap Script
+
+To facilitate easy onboarding of new machines, a bootstrap script will be developed. This script will:
+
+1. Detect the operating system (Linux or Windows).
+2. Install essential tools (e.g., `winget`, `scoop`, Ansible, and Python).
+3. Clone the Ansible playbook repository.
+4. Run an initial Ansible playbook to complete the setup.
+
+### Example Bootstrap Script
+
+```bash
+#!/bin/bash
+
+# Detect platform
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    echo "Linux detected."
+    sudo apt update
+    sudo apt install -y ansible git python3 python3-pip
+elif [[ "$OSTYPE" == "win"* ]]; then
+    echo "Windows detected."
+    powershell.exe -Command "& {Start-Process winget install --source winget.git -Wait}"
+else
+    echo "Unsupported OS: $OSTYPE"
+    exit 1
+fi
+
+# Clone the Ansible repository
+git clone https://github.com/<your-repo>.git ~/ansible-playbooks
+
+# Run the bootstrap playbook
+cd ~/ansible-playbooks
+ansible-playbook -i inventory/hosts bootstrap.yml
+```
+
+## Static Handbook Website
+
+The handbook will be a self-hosted static website, written in Markdown, converted to HTML, and served locally using a simple web server.
+
+### Hosting Plan
+
+1. **Markdown to HTML Conversion**:
+
+   * Use tools like `mkdocs` or `Hugo` for generating the static site.
+
+2. **Bundled Web Server**:
+
+   * Use Python's built-in HTTP server for simplicity.
+
+3. **Example Web Server Script**:
+
+```bash
+#!/bin/bash
+python3 -m http.server --directory ./handbook 8000
+echo "Handbook available at http://localhost:8000"
+```
+
+### Handbook File Structure
+
+```
+handbook/
+├── index.html
+├── assets/
+├── markdown/
+│   ├── 01-introduction.md
+│   ├── 02-prerequisites.md
+│   ├── 03-installation.md
+│   ├── 04-usage.md
+│   └── 05-troubleshooting.md
+└── run_handbook.sh
+```
+
+## Open Questions and Exploration Areas
+
+* Detailed cloud development service integration
+* Advanced monitoring solutions
+* Comprehensive backup strategies
+
+## Document Status
+
+* Version: 0.2
+* Last Updated: [Current Date]
+* Authors: User and AI Assistant
