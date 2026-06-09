@@ -1,0 +1,9 @@
+Windows Registry Editor Version 5.00
+
+[HKEY_CLASSES_ROOT\.md]
+@="markdown"
+"Content Type"="text/plain"
+"PerceivedType"="text"
+
+[HKEY_CLASSES_ROOT\.md\PersistentHandler]
+@="{1531d583-8375-4d3f-b5fb-d23bbd169f22}"
