@@ -1,5 +1,160 @@
 # App 2.D - Scoop and OpenSSH Installation
 
+Integrate this with the rest of the doc:
+
+
+
+ChatGPT: June 24, 2026 15:23 PDT GPT-5.5
+
+```markdown
+# Windows “C:\me” Layout + Scoop + Git Setup (Reference Notes)
+
+## Goal
+Create a stable Windows development layout under `C:\me` while avoiding conflicts between:
+- Windows system tools
+- Scoop-managed tools
+- PowerShell behavior
+- Git configuration
+
+---
+
+## 1. Directory Structure
+
+All user-managed tooling is moved under:
+
+```
+
+C:\me
+C:\me\jerry
+C:\me\scoop
+C:\me\scoopglobal
+C:\me\bin
+C:\me\scripts
+
+````
+
+- `C:\me\jerry` = user workspace / home-like directory
+- `C:\me\scoop` = local Scoop installation root
+- `C:\me\scoopglobal` = global Scoop apps
+
+---
+
+## 2. HOME Environment Variable
+
+Set:
+
+```powershell
+$env:HOME = "C:\me\jerry"
+````
+
+Purpose:
+
+* Used by Git and other Unix-style tools
+* Not used by PowerShell itself on Windows
+* Provides a consistent “home” for CLI tools that respect HOME
+
+Important:
+
+* Do NOT override PowerShell’s `$HOME`
+* Only set `$env:HOME`
+
+---
+
+## 3. Scoop Installation Location
+
+Scoop is configured as:
+
+```
+root_path   = C:\me\scoop
+global_path = C:\me\scoopglobal
+```
+
+Verify:
+
+```powershell
+scoop config
+```
+
+Ensure shims are used for PATH resolution:
+
+```
+C:\me\scoop\shims
+```
+
+---
+
+## 4. PATH Ordering Fix
+
+Scoop must take priority over Windows system binaries:
+
+```powershell
+$shims = "C:\me\scoop\shims"
+
+if (Test-Path $shims) {
+    $env:PATH = "$shims;$env:PATH"
+}
+```
+
+Result:
+
+* Scoop versions of tools (curl, git, etc.) win over Windows System32 versions.
+
+---
+
+## 5. Git Configuration
+
+Git is installed via Scoop:
+
+```
+C:\me\scoop\apps\git\current
+```
+
+Global config lives in:
+
+```
+C:\me\jerry\.gitconfig
+```
+
+Credential helper:
+
+```
+manager
+```
+
+Check config:
+
+```powershell
+git config --list --show-origin
+```
+
+---
+
+## 6. Key Principle
+
+Do NOT try to force Windows, PowerShell, and WSL to share a single “HOME”.
+
+Instead:
+
+* PowerShell: uses `$HOME` → stays `C:\Users\...`
+* Tools: use `$env:HOME = C:\me\jerry`
+* Packages: live under `C:\me`
+* PATH: prioritize Scoop shims
+
+---
+
+## 7. Mental Model
+
+* `C:\me` = tooling and system you control
+* `C:\Users\Jerry` = Windows-managed profile (mostly untouched)
+* `$env:HOME` = compatibility layer for CLI tools
+* Scoop shims = control point for all user-installed CLI tools
+
+```
+```
+
+------------------------------
+
+
 ## Objectives
 
 * Initialize the Scoop package manager inside the unified `C:\me` directory tree.
