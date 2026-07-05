@@ -4,14 +4,16 @@
 2026-07-03
 
 ## SUMMARY
-This appendix documents the workflow and canonical prompt
-used to convert LLM chat discussions about homelab design
-into standalone appendices in this handbook, and the
-convention for keeping an `Index.md` in sync with the
-appendix files on disk. It exists so future chat sessions
-(and future me) can reuse the same prompt rather than
-re-deriving it, and so `Index.md` can be regenerated
-mechanically instead of hand-maintained.
+
+This appendix documents the workflow and canonical prompt used to
+convert LLM chat discussions into standalone appendices in a
+human-centered operators handbook, and the convention for keeping an
+`Index.md` in sync with the appendix files on disk. It exists so
+future chat sessions (and future me) can reuse the same prompt rather
+than re-deriving it, and so `Index.md` can be regenerated mechanically
+instead of hand-maintained. It is human-centered for operators, hence
+longer discussions of rationale and design go after initial summaries
+and procedures.
 
 ## TAGS
 llm, prompt-engineering, rag, documentation,
@@ -33,49 +35,6 @@ operator-manual, indexing, powershell, markdown, homelab
   placement; without that, it cannot number the new
   appendix and should say so rather than guess.
 
-## DESIGN / OPERATIONAL DECISIONS
-- **A single canonical prompt, reused verbatim per
-  session.** Consistent structure across appendices matters
-  more than any per-topic customization — it's what makes
-  both skimming by eye and header-based RAG chunking
-  reliable across the whole handbook.
-- **Tags as one plain line, not YAML front-matter.** These
-  documents are read by a human first and a retriever
-  second. Front-matter is a machine-first convention and
-  costs readability for a personal corpus that doesn't need
-  programmatic metadata queries yet.
-- **A `WRITTEN` date instead of a versioning/status
-  system.** Sufficient to tell, by eye, which of two
-  appendices on the same subsystem is newer. If a new
-  appendix fully replaces an old one, the new appendix notes
-  the superseded filename under `WRITTEN` — no separate
-  status field.
-- **Hierarchical numbering mirrors the chapter structure.**
-  The LLM proposes a slot (e.g. `App 2.G`) based on the
-  visible index, but the placement is explicitly a
-  suggestion for confirmation, not a committed decision —
-  misfiling a chapter is more costly than a few seconds of
-  confirming a number.
-- **Constants declared at the top of generated scripts.**
-  Matches the existing PowerShell-first, auditable style
-  used throughout this handbook; no magic paths, hostnames,
-  ports, or thresholds buried in logic.
-- **`Index.md` is regenerated, not hand-maintained.** A
-  script derives it from the appendix files themselves
-  (via their `SUMMARY` and `TAGS` sections), so the index
-  can't silently drift out of sync with the corpus the way
-  a manually edited list can.
-
-## TRADEOFFS
-- YAML front-matter vs. a plain tags line: front-matter
-  rejected in favor of readability, since this corpus is
-  read by a person, not queried by tooling.
-- Formal versioning/status fields vs. a written date:
-  versioning rejected as unneeded ceremony for a
-  single-author corpus; a date plus an optional
-  supersedes-note carries the same information with far
-  less structure.
-
 ## PROCEDURE / USAGE
 
 1. At the end of a homelab design discussion, paste the
@@ -84,9 +43,9 @@ operator-manual, indexing, powershell, markdown, homelab
    can propose a placement.
 2. Review the proposed appendix number and title. Confirm
    or adjust before saving.
-3. Save the returned Markdown as `App <number> -
-   <Title>.md` in the handbook directory.
-4. Run `Make-Index` to regenerate `Index.md` from the full
+3. Save the returned Markdown as `App <number> - <Title>.md` 
+   in the handbook directory.
+4. Run `Create-Index` to regenerate `Index.md` from the full
    set of appendix files.
 
 ### Canonical Prompt
@@ -109,15 +68,17 @@ Do NOT include:
 - step-by-step debugging trails
 
 Instead include ONLY:
-- final architecture or solution
-- design rationale for current choices
-- constraints that shaped the design
-- tradeoffs between relevant alternatives
-- operational guidance
+- final architecture
+- solution implemented as code in the language of the chat (powershell, bash, python, etc.)
+- notes on 
+  - operational guidance
+  - design rationale for current choices
+  - constraints that shaped the design
+  - tradeoffs between relevant alternatives
 
 If a section has nothing substantive to say, omit that
-section entirely. Do not pad with filler like "no
-significant tradeoffs were considered."
+section entirely. Do not pad with filler like "not applicable" or
+"no significant tradeoffs were considered."
 
 Output Markdown in this structure:
 
@@ -156,13 +117,6 @@ than inventing near-duplicates (e.g. don't mix
 What this applies to, and any important limitations or
 assumptions.
 
-## DESIGN / OPERATIONAL DECISIONS
-Key decisions with rationale (WHY each choice was made).
-
-## TRADEOFFS
-Only relevant alternatives considered at a design level
-(not chat exploration).
-
 ## PROCEDURE / USAGE
 The correct operational steps or configuration, if
 applicable. Where a step asserts a current-state fact that
@@ -182,7 +136,7 @@ Rules for code blocks:
   JSON, etc.)
 - Include all required imports, parameters, and
   dependencies
-- No explanation inside code blocks
+- Brief explanations within code blocks
 - No omitted steps required for execution
 - All constants (paths, hostnames, ports, thresholds,
   file patterns, etc.) must be assigned to named variables
@@ -196,6 +150,13 @@ blocks:
 - Linux (bash)
 - Configuration files (YAML/JSON/INI)
 - Infrastructure definitions (Ansible, Docker, etc.)
+
+## DESIGN / OPERATIONAL DECISIONS
+Key decisions with rationale (WHY each choice was made).
+
+## TRADEOFFS
+Only relevant alternatives considered at a design level
+(not chat exploration).
 
 ## NOTES
 Warnings, caveats, operational gotchas. If this topic
@@ -216,7 +177,7 @@ Rules:
 
 ## IMPLEMENTATION
 
-### PowerShell — Make-Index
+### PowerShell — Create-Index
 
 Accepts an ordered list of literal filenames and/or
 wildcard patterns. Literal names are included in the exact
@@ -227,7 +188,7 @@ is scanned for `## SUMMARY` and `## TAGS` to build one
 bullet per file in the output `Index.md`.
 
 ```powershell
-function Make-Index {
+function Create-Index {
     <#
     .SYNOPSIS
         Regenerates Index.md from handbook appendix files.
@@ -235,7 +196,7 @@ function Make-Index {
     .DESCRIPTION
         Accepts an ordered list of filenames and/or
         wildcard patterns, e.g.:
-            Make-Index README.md, Guidelines.md, App*.md
+            Create-Index README.md, Guidelines.md, App*.md
         Literal filenames appear in the order given.
         Wildcard matches are expanded and sorted by the
         "App N.X.Y" numbering in each filename before
@@ -397,14 +358,14 @@ function Make-Index {
 Example usage, matching the corpus in this handbook:
 
 ```powershell
-Make-Index README.md, Guidelines.md, App*.md `
+Create-Index README.md, Guidelines.md, App*.md `
     -Directory 'C:\me\workspace\handbook' `
     -OutFile 'C:\me\workspace\handbook\Index.md'
 ```
 
 ## NOTES
-- `Make-Index` uses an unapproved PowerShell verb
-  (`Make`). This is intentional to match the requested
+- `Create-Index` uses an unapproved PowerShell verb
+  (`Create`). This is intentional to match the requested
   name; `PSScriptAnalyzer` will flag it. An alias to
   `New-Index` can be added if that warning becomes
   annoying.
@@ -419,9 +380,53 @@ Make-Index README.md, Guidelines.md, App*.md `
   a proposal to change how `Handbook.md` itself is
   assembled.
 
+## DESIGN / OPERATIONAL DECISIONS
+- **A single canonical prompt, reused verbatim per
+  session.** Consistent structure across appendices matters
+  more than any per-topic customization — it's what makes
+  both skimming by eye and header-based RAG chunking
+  reliable across the whole handbook.
+- **Tags as one plain line, not YAML front-matter.** These
+  documents are read by a human first and a retriever
+  second. Front-matter is a machine-first convention and
+  costs readability for a personal corpus that doesn't need
+  programmatic metadata queries yet.
+- **A `WRITTEN` date instead of a versioning/status
+  system.** Sufficient to tell, by eye, which of two
+  appendices on the same subsystem is newer. If a new
+  appendix fully replaces an old one, the new appendix notes
+  the superseded filename under `WRITTEN` — no separate
+  status field.
+- **Hierarchical numbering mirrors the chapter structure.**
+  The LLM proposes a slot (e.g. `App 2.G`) based on the
+  visible index, but the placement is explicitly a
+  suggestion for confirmation, not a committed decision —
+  misfiling a chapter is more costly than a few seconds of
+  confirming a number.
+- **Constants declared at the top of generated scripts.**
+  Matches the existing PowerShell-first, auditable style
+  used throughout this handbook; no magic paths, hostnames,
+  ports, or thresholds buried in logic.
+- **`Index.md` is regenerated, not hand-maintained.** A
+  script derives it from the appendix files themselves
+  (via their `SUMMARY` and `TAGS` sections), so the index
+  can't silently drift out of sync with the corpus the way
+  a manually edited list can.
+
+## TRADEOFFS
+- YAML front-matter vs. a plain tags line: front-matter
+  rejected in favor of readability, since this corpus is
+  read by a person, not queried by tooling.
+- Formal versioning/status fields vs. a written date:
+  versioning rejected as unneeded ceremony for a
+  single-author corpus; a date plus an optional
+  supersedes-note carries the same information with far
+  less structure.
+
+
 ## SEARCHABLE KEY PHRASES
 canonical appendix prompt, LLM chat to markdown appendix,
-operator manual appendix generation, Make-Index
+operator manual appendix generation, Create-Index
 PowerShell, regenerate Index.md, appendix numbering
 sort order, App N.X.Y hierarchy, RAG-friendly handbook
 structure
