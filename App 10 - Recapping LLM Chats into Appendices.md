@@ -107,12 +107,15 @@ indexing, powershell, markdown, homelab, script-extraction
 
 ### Canonical Prompt
 
+
 ```text
-Convert this technical discussion into a single canonical
-handbook entry for an operator manual. Like a Jupyter
-notebook, mix prose (rationale, constraints,
-specifications) with code blocks that implement the
-procedures discussed.
+
+Convert this technical discussion into a single canonical handbook
+entry for an operator manual. Like a Jupyter notebook, mix prose
+(rationale, constraints, specifications) with code blocks containing
+the actual configuration, shell commands, program fragments, and,
+where appropriate, complete programs that implement the procedures
+discussed.
 
 This document must describe the CURRENT AND CORRECT SYSTEM
 STATE, not the history of how it was discovered.
@@ -227,11 +230,22 @@ date) rather than just asserting it.
 
 ## IMPLEMENTATION
 
-Required whenever PROCEDURE / USAGE describes a
-configuration or operational step. Complete, executable
-code blocks, one per corresponding procedure step.
+Throughout the document, place code blocks immediately
+adjacent to the prose they implement. These may consist of
+configuration snippets, shell commands, program fragments,
+or complete executable programs, whichever most faithfully
+represents the operational system.
 
-Rules for code blocks:
+When the discussion naturally yields reusable command-line
+utilities, scripts, or complete configuration files,
+consolidate them at the end of this section as complete
+artifacts.
+
+Complete, executable artifacts should follow the rules
+below.
+
+Rules for executable artifacts:
+
 * Complete and runnable as written. Saving the code block to the
   specified filename and executing it directly must perform the
   documented behavior without requiring additional wrapper code,
