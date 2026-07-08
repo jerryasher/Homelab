@@ -59,14 +59,16 @@ indexing, powershell, markdown, homelab, script-extraction
   context to propose a placement; without that, it cannot number the
   new appendix and should say so rather than guess.
 
-* Every embedded script (any fenced code block meant to be saved and
-  run, as opposed to an inline example or fragment) is immediately
-  preceded by a single line of the form `#### FILE: <filename>`,
-  separated from the code fence by nothing but the standard single
-  blank line. This is what lets a script be pulled back out of its
-  appendix mechanically: the same plain sequential text scan already
-  used for `SUMMARY` and `TAGS` extraction can also recognize this
-  marker and hand the following fenced block to a file of that name.
+* Complete executable artifacts (scripts, utilities, or complete
+  configuration files intended to be saved and reused), as opposed to
+  inline commands, configuration snippets, or illustrative program
+  fragments, are immediately preceded by a single line of the form
+  `#### FILE: <filename>`, separated from the code fence by nothing
+  but the standard single blank line. This is what lets a script be
+  pulled back out of its appendix mechanically: the same plain
+  sequential text scan already used for `SUMMARY` and `TAGS`
+  extraction can also recognize this marker and hand the following
+  fenced block to a file of that name.
 
 * All generated Markdown and source files are UTF-8 encoded.
 
@@ -99,11 +101,11 @@ indexing, powershell, markdown, homelab, script-extraction
    Use `-WhatIf` first to preview what would be written without
    touching `Index.md`.
 
-5. If a script embedded in an appendix needs to live on disk as its
-   own file (to run it, diff it, or check it into source control),
-   run `Export-AppendixScript` against that appendix - or against
-   `Index.md` via `-IndexFile` to sweep every appendix at once -
-   rather than hand-copying the code block out.
+5. If an executable artifact embedded in an appendix needs to live on
+   disk as its own file (to run it, diff it, or check it into source
+   control), run `Export-AppendixScript` against that appendix - or
+   against `Index.md` via `-IndexFile` to sweep every appendix at
+   once - rather than hand-copying the code block out.
 
 ### Canonical Prompt
 
@@ -230,6 +232,13 @@ date) rather than just asserting it.
 
 ## IMPLEMENTATION
 
+Following the notebook style described above, explanatory prose is
+interleaved with the actual commands, configuration snippets, and
+program fragments that implement each procedure. Where a reusable
+artifact naturally results, it is consolidated at the end of the
+relevant subsection and marked with a `#### FILE:` line so it can be
+mechanically extracted.
+
 Throughout the document, place code blocks immediately
 adjacent to the prose they implement. These may consist of
 configuration snippets, shell commands, program fragments,
@@ -331,9 +340,22 @@ blocks:
 ## DESIGN / OPERATIONAL DECISIONS
 Key decisions with rationale (WHY each choice was made).
 
+Notebook-first documentation. Operational commands,
+configuration snippets, and program fragments are shown inline where
+they are discussed. Complete executable artifacts are generated only
+when they provide operational value beyond the surrounding notebook,
+avoiding artificial wrapper scripts.
+
 ## TRADEOFFS
 Only relevant alternatives considered at a design level
 (not chat exploration).
+
+Notebook fragments vs. executable-only documentation.
+Interleaving commands and configuration with the explanatory text
+improves readability and mirrors how operators actually work.
+Complete reusable artifacts are still produced where appropriate,
+but not every command sequence is artificially promoted into a
+standalone utility.
 
 ## NOTES
 Warnings, caveats, operational gotchas. If this topic
@@ -1345,10 +1367,12 @@ function on its own):
   before this convention existed will have no markers at all and
   simply yields nothing extractable until it is updated.
 
-* Appendices predating this convention (including earlier revisions
-  of this one) will not have `#### FILE:` markers on their embedded
-  scripts. There is no bulk-retrofit tool; markers are added the next
-  time an appendix is touched.
+* Appendices predating this convention may contain executable
+  artifacts without `#### FILE:` markers and may also lack inline
+  notebook-style command or configuration blocks. Both conventions
+  should be adopted incrementally as appendices are revised. There is
+  no bulk-retrofit tool; markers are added the next time an appendix
+  is touched.
 
 * Review generated output for accidental typographic Unicode
   characters (smart quotes, em/en dashes, ellipses, non-breaking
