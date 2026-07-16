@@ -1,6 +1,9 @@
 # App 10 - Recapping LLM Chats into Appendices
 
-#### WRITTEN: 2026 July, 06
+# TODO, MODIFY PROMPT TO ENCOURAGE GENERATED SCRIPTS TO BE ADVANCED POWERSHELL FUNCTIONS THAT CAN PARTICIPATE IN A PIPELINE
+
+
+#### WRITTEN: 2026 July 06
 
 ## SUMMARY
 
@@ -191,7 +194,7 @@ Title format matches the existing corpus: "App <number> -
 Resolution". This is also the filename as-is (spaces
 included) - no separate slug needed.
 
-#### WRITTEN: <YYYY Mon, DD HH:MM>
+#### WRITTEN: <YYYY Month DD HH:MM>
 
 Date this entry was generated (YYYY Mon, DD HH:MM). If this entry
 supersedes an earlier appendix, name that file here.

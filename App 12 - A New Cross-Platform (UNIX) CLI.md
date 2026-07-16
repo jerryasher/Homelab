@@ -1,4 +1,4 @@
-# App 12 - The New CLI
+# App 12 - A New Cross-Platform (UNIX)s CLI
 
 #### WRITTEN: 2026 Jul, 13 17:18
 
