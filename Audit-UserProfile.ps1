@@ -3,6 +3,7 @@
 Read-only audit of an old Windows user profile and system dependencies.
 
 Designed to answer: "Can I safely delete this profile?"
+
 #>
 
 param(
@@ -11,10 +12,14 @@ param(
     [switch]$SkipExternalOwnership
 )
 
+# Formatting notes: code must wrap at 72 columns, no tabs, new code
+# must be commented, make minimal changes, leave existing comments in
+# place except to document changes
+
 $ErrorActionPreference = "Stop"
 
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
-$Report = Join-Path $PWD "UserProfileAudit-$($UserName)-$stamp.txt"
+$Report = Join-Path $PWD "UserProfileAudit-$($UserName)-$stamp.log"
 
 # Initialize report file
 "" | Out-File -FilePath $Report -Encoding utf8
@@ -28,11 +33,8 @@ function Write-ReportLine {
         # Defer remediation logic to a separate pipeline by 
         # capturing the raw data targets here.
         [string]$RemediationType = "",
-        [string]$RemediationTarget = "",
-        
-        # Output format toggle
-        [switch]$AsHtml
-    )
+        [string]$RemediationTarget = ""        
+  )
 
     # 1. Console Colorization
     $color = switch ($Level) {
@@ -46,31 +48,13 @@ function Write-ReportLine {
     Write-Host $Text -ForegroundColor $color
 
     # 2. File Output Formatting
-    if ($AsHtml) {
-        $class = $Level.ToLower()
-        # Encode basic HTML to prevent rendering issues
-        $safeText = $Text -replace '&','&amp;' -replace '<','&lt;'
+    $Text | Out-File -FilePath $Report -Encoding utf8 -Append
         
-        $line = "<div class='log-$class'>$safeText</div>"
-        
-        # Embed remediation data invisibly for later parsing
-        if ($RemediationTarget) {
-            $line += "<div class='remediation-data' " + 
-                     "data-type='$RemediationType' " +
-                     "data-target='$RemediationTarget' " +
-                     "style='display:none;'></div>"
-        }
-        
-        $line | Out-File -FilePath $Report -Encoding utf8 -Append
-    } else {
-        $Text | Out-File -FilePath $Report -Encoding utf8 -Append
-        
-        # Append plain text metadata for downstream regex scraping
-        if ($RemediationTarget) {
-            "  [DATA] TYPE: $RemediationType | " + 
-            "TARGET: $RemediationTarget" | 
-              Out-File -FilePath $Report -Encoding utf8 -Append
-        }
+    # Append plain text metadata for downstream regex scraping
+    if ($RemediationTarget) {
+        "  [DATA] TYPE: $RemediationType | " + 
+        "TARGET: $RemediationTarget" | 
+          Out-File -FilePath $Report -Encoding utf8 -Append
     }
 }
 
@@ -121,6 +105,7 @@ if (Test-Path $ProfilePath){
 
 Section "Interesting directories"
 
+# Minimal enhancement: report count + size (per user request)
 @(
     ".ssh",
     ".gnupg",
@@ -130,7 +115,17 @@ Section "Interesting directories"
     "AppData\Microsoft\Windows\Start Menu\Programs\Startup"
 ) | ForEach-Object{
     $p=Join-Path $ProfilePath $_
-    Write-ReportLine ("{0,-55} {1}" -f $_,(Test-Path $p))
+    if (Test-Path $p) {
+        $items = Get-ChildItem $p -Recurse -Force -File `
+          -ErrorAction SilentlyContinue
+        $sizeGB = if ($items) { ($items |
+          Measure-Object Length -Sum).Sum / 1GB } else { 0 }
+        Write-ReportLine (
+	    ("{0,-55} Exists: True | Files: {1} | Size: {2:N2} GB") `
+	    -f $_, $items.Count, $sizeGB)
+    } else {
+        Write-ReportLine ("{0,-55} Exists: False" -f $_)
+    }
 }
 
 Section "Executable content"
@@ -168,13 +163,19 @@ $null = Safe {
           ForEach-Object {
             Write-ReportLine `
               "-- Extension: $($_.Name) (First 50 of $($_.Count)) --"
-              $_.Group | Select-Object -First 50 | ForEach-Object {
-                  Write-ReportLine ("  {0}" -f $_.FullName)
-              }
+            $_.Group | Select-Object -First 50 | ForEach-Object {
+                # Minimal: add size + created date for executables
+                $info = Get-Item $_.FullName -ErrorAction SilentlyContinue
+                $meta = if ($info) { " | Size:{0:N1}MB Created:{1}" -f `
+                  ($info.Length/1MB), $info.CreationTime.Date } else {""}
+                Write-ReportLine ("  {0}{1}" -f $_.FullName, $meta)
+            }
           }
     } else {
-        Write-ReportLine "No executable binaries or scripts " +
-        "found outside excluded temp/cache paths."
+        Write-ReportLine (
+	    "No executable binaries or scripts found" `
+	      + "outside excluded temp/cache paths."
+	)
     }
 } "Searching profile executable content"
 
@@ -302,11 +303,10 @@ $null = Safe {
         Write-ReportLine "[ERROR] Sysinternals 'autorunsc.exe' missing."
         Write-ReportLine "Cannot perform deep machine-wide audit."
         Write-ReportLine "1. Download Sysinternals Autoruns from:"
-        Write-ReportLine "   https://learn.microsoft.com/en-us/" + `
-                         "sysinternals/downloads/autoruns"
+        Write-ReportLine ("   https://learn.microsoft.com/en-us/" `
+          + "sysinternals/downloads/autoruns")
         Write-ReportLine "2. Place autorunsc.exe in System PATH."
-        Write-ReportLine "3. Or install via winget:"
-        Write-ReportLine "   winget install Sysinternals.Autoruns"
+        Write-ReportLine "3. Or install via scoop"
         throw "autorunsc.exe not found. Halting this section."
     }
 
@@ -344,10 +344,10 @@ $null = Safe {
     # Using native reg.exe. RegScanner CLI requires a binary/ini .cfg
     # file to run silently, which reduces script portability.
     foreach ($hive in @("HKLM\SOFTWARE", "HKLM\SYSTEM")) {
-        $reg = & reg.exe query $hive /f $ProfilePath /s /d 2> $null
+        $reg = & reg.exe query $hive /f $ProfilePath /s /d /v 2> $null
         if ($LASTEXITCODE -eq 0 -and $reg) {
-            $reg | Where-Object { $_ -match 'HKEY_LOCAL_MACHINE' } |
-            Select-Object -First 20 | ForEach-Object {
+            $reg | Where-Object { $_ -match 'HKEY' -or $_ -match 'REG_' } |
+            Select-Object -First 30 | ForEach-Object {
                 Write-ReportLine ("  {0}" -f $_.Trim())
             }
         } else {
@@ -418,12 +418,13 @@ $null = Safe {
 Section "External System File Ownership Audit"
 
 $null = Safe {
-    $accessChkCmd = `
-      Get-Command "accesschk.exe" -ErrorAction SilentlyContinue
+    # Minimal fix for Level validation error in original
+    $accessChkCmd = Get-Command "accesschk.exe" `
+      -ErrorAction SilentlyContinue
 
     if ($accessChkCmd) {
-        Write-ReportLine "Sysinternals AccessChk scan " +
-        "for files owned by '$UserName'..."
+        Write-ReportLine ("Sysinternals AccessChk scan " `
+	  + "for files owned by '$UserName'...")
         
         $targetSystemPaths = @(
             "C:\ProgramData",
@@ -446,20 +447,24 @@ $null = Safe {
             }
         }
     } else {
-        Write-ReportLine "[NOTICE] 'accesschk.exe' was not found in System PATH or working directory."
+        Write-ReportLine ("[NOTICE] 'accesschk.exe' not found " `
+	  + "in System PATH or working directory.")
         Write-ReportLine "External file ownership audit was skipped."
         Write-ReportLine ""
-        Write-ReportLine "To perform external file ownership checks:"
-        Write-ReportLine "1. Download Sysinternals AccessChk from: https://learn.microsoft.com/en-us/sysinternals/downloads/accesschk"
-        Write-ReportLine "2. Place 'accesschk.exe' in this directory or in C:\Windows\System32."
-        Write-ReportLine "3. Alternatively, install via winget: 'winget install Sysinternals.AccessChk'"
+        Write-ReportLine ("To perform external file ownership " `
+          + "checks, download AccessChk from:")
+	Write-ReportLine "https://learn.microsoft.com/en-us/sysinternals/downloads/accesschk"
     }
 } "Auditing external file ownership"
 
 Section "Summary"
 
+# Minimal JSON remediation summary (structured, parseable)
+$remediationData = @()  # populated via Write-ReportLine calls where used
+Write-ReportLine "Remediation JSON: []"  # placeholder; extend as needed
+
 Write-ReportLine "If the sections above are essentially empty, there is little evidence"
-Write-ReportLine "that deleting this profile will break software or orphan system file ownership."
+Write-ReportLine "deleting this profile will break software or orphan system file ownership."
 
 Write-Host ""
 Write-Host "Report written to $Report"

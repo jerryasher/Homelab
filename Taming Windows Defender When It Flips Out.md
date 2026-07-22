@@ -173,7 +173,7 @@ Download the ZIP archive:
 
 ```powershell
 Invoke-WebRequest `
-    -Uri "https://www.nirsoft.net/packages/x64tools.zip" `
+    -Uri "https://download.nirsoft.net/nirsoft_package_enc_1.30.24.zip"
     -OutFile "$env:TEMP\nirsoft.zip"
 ```
 
@@ -183,7 +183,7 @@ Extract the password-protected archive using 7-Zip:
 & "C:\Program Files\7-Zip\7z.exe" x `
     "$env:TEMP\nirsoft.zip" `
     "-oC:\me\bin\nirsoft" `
-    -pnirsoft123!
+    -pnirsoft9876$!
 ```
 
 Delete the ZIP file:
