@@ -1,0 +1,32 @@
+---
+- name: Configure Jerry's Custom Windows Audio Baseline
+  hosts: windows
+  gather_facts: false
+
+  tasks:
+    - name: Apply core desktop sound profiles to Current User registry
+      ansible.windows.win_regedit:
+        path: "HKCU:\\AppEvents\\Schemes\\Apps\\.Default\\{{ item.key }}\\.Current"
+        name: ""
+        data: "{{ item.value }}"
+        type: string
+      loop:
+        - { key: 'WindowsUAC', value: 'C:\Windows\Media\Windows Notify System Generic.wav' }
+        - { key: 'SystemAsterisk', value: 'C:\Windows\Media\Windows Notify.wav' }
+        - { key: 'SystemNotification', value: 'C:\Windows\Media\Windows Notify.wav' }
+        - { key: 'SystemExclamation', value: 'C:\Windows\Media\Windows Notify.wav' }
+        - { key: '.Default', value: '' }
+        - { key: 'SystemHand', value: 'C:\Windows\Media\Windows Notify System Generic.wav' }
+        - { key: 'DeviceConnect', value: 'C:\Windows\Media\Windows Hardware Insert.wav' }
+        - { key: 'DeviceDisconnect', value: 'C:\Windows\Media\Windows Hardware Remove.wav' }
+        - { key: 'MessageBeep', value: 'C:\Windows\Media\Windows Notify.wav' }
+
+    - name: Apply Mixer Volume Slider and Ducking modifications
+      ansible.windows.win_regedit:
+        path: HKCU:\Software\Microsoft\Multimedia\Audio
+        name: "{{ item.name }}"
+        data: "{{ item.data }}"
+        type: dword
+      loop:
+        - { name: 'UserVolumeSlider', data: 60 }
+        - { name: 'DuckingValue', data: 50 }

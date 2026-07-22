@@ -1,4 +1,3 @@
-
 <#
 .SYNOPSIS
     Regenerates Index.md from handbook appendix files.
@@ -70,8 +69,7 @@ param(
 
     [string] $Directory = (Get-Location).Path,
 
-    [string] $OutFile = (Join-Path
-        (Get-Location).Path 'Index.md'),
+    [string] $OutFile = (Join-Path (Get-Location).Path 'Index.md'),
 
     [Switch] $Version,
 
@@ -105,8 +103,7 @@ function Set-Index {
 
         [string] $Directory = (Get-Location).Path,
 
-        [string] $OutFile = (Join-Path
-            (Get-Location).Path 'Index.md')
+        [string] $OutFile = (Join-Path (Get-Location).Path 'Index.md')
     )
 
     # --- Constants & Patterns ------------------------
@@ -320,7 +317,7 @@ function Set-Index {
 
         $line = "$OutputBulletMarker **$($meta.FileName)**"
         if ($meta.Summary) {
-            $line += " — $($meta.Summary)"
+            $line += " - $($meta.Summary)"
         }
         $lines.Add($line)
 

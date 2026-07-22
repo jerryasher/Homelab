@@ -1,0 +1,44 @@
+Windows Registry Editor Version 5.00
+
+; Description: Consolidated Windows Baseline Sound Profile
+; Author: Jerry Asher
+; Fixes: UAC Alerts, Registry Confirmations, Default Beeps, and Critical Errors
+
+; --- SECTION 1: USER ACCOUNT CONTROL (UAC) AUDIO CONFIGURATION ---
+[HKEY_CURRENT_USER\AppEvents\Schemes\Apps\.Default\WindowsUAC\.Current]
+@="C:\\Windows\\Media\\Windows Notify System Generic.wav"
+
+; --- SECTION 2: SYSTEM AUDIO MIXER TWEAKS (VOLUME & DUCKING) ---
+[HKEY_CURRENT_USER\Software\Microsoft\Multimedia\Audio]
+"UserVolumeSlider"=dword:0000003c
+"DuckingValue"=dword:00000032
+
+; --- SECTION 3: SYSTEM WARNINGS & REGISTRY CONFIRMATIONS ---
+[HKEY_CURRENT_USER\AppEvents\Schemes\Apps\.Default\SystemAsterisk\.Current]
+@="C:\\Windows\\Media\\Windows Notify.wav"
+
+[HKEY_CURRENT_USER\AppEvents\Schemes\Apps\.Default\SystemNotification\.Current]
+@="C:\\Windows\\Media\\Windows Notify.wav"
+
+[HKEY_CURRENT_USER\AppEvents\Schemes\Apps\.Default\SystemExclamation\.Current]
+@="C:\\Windows\\Media\\Windows Notify.wav"
+
+; --- SECTION 4: DESKTOP ALERTS & AUDIO CLEANUP ---
+; Silence the system-wide Default Beep
+[HKEY_CURRENT_USER\AppEvents\Schemes\Apps\.Default\.Default\.Current]
+@=""
+
+; Soften Critical Stop (Error)
+[HKEY_CURRENT_USER\AppEvents\Schemes\Apps\.Default\SystemHand\.Current]
+@="C:\\Windows\\Media\\Windows Notify System Generic.wav"
+
+; Soften Device Connect/Disconnect
+[HKEY_CURRENT_USER\AppEvents\Schemes\Apps\.Default\DeviceConnect\.Current]
+@="C:\\Windows\\Media\\Windows Hardware Insert.wav"
+
+[HKEY_CURRENT_USER\AppEvents\Schemes\Apps\.Default\DeviceDisconnect\.Current]
+@="C:\\Windows\\Media\\Windows Hardware Remove.wav"
+
+; Soften standard Message Box popups
+[HKEY_CURRENT_USER\AppEvents\Schemes\Apps\.Default\MessageBeep\.Current]
+@="C:\\Windows\\Media\\Windows Notify.wav"

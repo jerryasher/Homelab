@@ -507,8 +507,7 @@ param(
 
     [string] $Directory = (Get-Location).Path,
 
-    [string] $OutFile = (Join-Path
-        (Get-Location).Path 'Index.md'),
+    [string] $OutFile = (Join-Path (Get-Location).Path 'Index.md'),
 
     [Switch] $Version,
 
@@ -542,8 +541,7 @@ function Set-Index {
 
         [string] $Directory = (Get-Location).Path,
 
-        [string] $OutFile = (Join-Path
-            (Get-Location).Path 'Index.md')
+        [string] $OutFile = (Join-Path (Get-Location).Path 'Index.md')
     )
 
     # --- Constants & Patterns ------------------------
